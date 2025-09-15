@@ -6,6 +6,7 @@ import { WishlistProvider } from './context/WishlistContext';
 import { LocationProvider } from './context/LocationContext';
 import Header from './components/common/Header';
 import Footer from './components/common/Footer';
+import BackToTop from './components/common/BackToTop';
 import Home from './pages/Home';
 import ProductDetails from './pages/ProductDetails';
 import SearchResults from './pages/SearchResults';
@@ -63,6 +64,7 @@ function App() {
                   </Routes>
                 </main>
                 <Footer />
+                <BackToTop />
               </div>
             </Router>
           </LocationProvider>

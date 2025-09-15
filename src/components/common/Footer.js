@@ -31,7 +31,7 @@ const Footer = () => {
           <Col md={3}>
             <h5 className="mb-3">Admin</h5>
             <ul className="list-unstyled">
-              <li><a href="/login?admin=true" className="text-light text-decoration-none">Admin Login</a></li>
+              <li><a href="/admin" className="text-light text-decoration-none">Admin Login</a></li>
             </ul>
           </Col>
         </Row>

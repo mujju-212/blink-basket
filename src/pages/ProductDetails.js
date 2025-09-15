@@ -29,6 +29,7 @@ const ProductDetails = () => {
 
   useEffect(() => {
     const loadProduct = async () => {
+      setLoading(true);
       try {
         const productData = productService.getProductById(parseInt(id));
         if (!productData) {
@@ -292,10 +293,16 @@ const ProductDetails = () => {
                  isInCart ? `Update Cart (${cartItem.quantity})` : 'Add to Cart'}
               </Button>
               <Button 
-                variant={isInWishlist(product.id) ? "danger" : "outline-secondary"}
+                variant={isInWishlist(product.id) ? "danger" : "outline-danger"}
                 size="lg"
                 onClick={handleToggleWishlist}
-                style={{ minWidth: '60px' }}
+                style={{ 
+                  minWidth: '60px',
+                  backgroundColor: isInWishlist(product.id) ? '#dc3545' : 'white',
+                  color: isInWishlist(product.id) ? 'white' : '#dc3545',
+                  border: '2px solid #dc3545',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}
               >
                 <i className="fas fa-heart"></i>
               </Button>

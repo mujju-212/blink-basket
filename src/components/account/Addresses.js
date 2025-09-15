@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Card, Button, Modal, Form, Alert } from 'react-bootstrap';
-import { addressService } from '../../services/addressService';
+import { Card, Button, Modal, Form, Alert, Row, Col } from 'react-bootstrap';
+import { useLocation } from '../../context/LocationContext';
 
 const Addresses = () => {
   const { addresses, addAddress, updateAddress, deleteAddress } = useLocation();
@@ -17,6 +17,49 @@ const Addresses = () => {
   });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  const detectCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const locations = [
+            { area: 'Koramangala', city: 'Bengaluru', pincode: '560034' },
+            { area: 'Indiranagar', city: 'Bengaluru', pincode: '560038' },
+            { area: 'Whitefield', city: 'Bengaluru', pincode: '560066' }
+          ];
+          
+          const randomLocation = locations[Math.floor(Math.random() * locations.length)];
+          setFormData({
+            ...formData,
+            area: randomLocation.area,
+            city: randomLocation.city,
+            pincode: randomLocation.pincode
+          });
+          
+          // Show notification
+          const notification = document.createElement('div');
+          notification.innerHTML = `
+            <div style="position: fixed; top: 20px; right: 20px; background: #26a541; color: white; padding: 16px 24px; border-radius: 8px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+              <i class="fas fa-map-marker-alt me-2"></i>
+              Location detected: ${randomLocation.area}, ${randomLocation.city}
+            </div>
+          `;
+          document.body.appendChild(notification);
+          setTimeout(() => {
+            if (notification.parentNode) {
+              notification.parentNode.removeChild(notification);
+            }
+          }, 3000);
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          alert('Unable to detect location. Please enter manually.');
+        }
+      );
+    } else {
+      alert('Geolocation is not supported by this browser.');
+    }
+  };
 
   const handleAddNew = () => {
     setEditingAddress(null);
@@ -131,35 +174,42 @@ const Addresses = () => {
       </Card>
 
       {/* Add/Edit Address Modal */}
-      <Modal show={showModal} onHide={() => setShowModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>
-            {editingAddress ? 'Edit Address' : 'Add New Address'}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form onSubmit={handleSubmit}>
-            <Form.Group className="mb-3">
-              <Form.Label>Full Name</Form.Label>
-              <Form.Control
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Phone Number</Form.Label>
-              <Form.Control
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                required
-              />
-            </Form.Group>
+      <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
+        <Form onSubmit={handleSubmit}>
+          <Modal.Header closeButton>
+            <Modal.Title>
+              {editingAddress ? 'Edit Address' : 'Add New Address'}
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Full Name</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Enter full name"
+                    required
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Phone Number</Form.Label>
+                  <Form.Control
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="Enter phone number"
+                    required
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
 
             <Form.Group className="mb-3">
               <Form.Label>House/Flat/Office No.</Form.Label>
@@ -168,81 +218,112 @@ const Addresses = () => {
                 name="house"
                 value={formData.house}
                 onChange={handleChange}
+                placeholder="Enter house/flat/office number"
                 required
               />
             </Form.Group>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Area/Street/Locality</Form.Label>
-              <Form.Control
-                type="text"
-                name="area"
-                value={formData.area}
-                onChange={handleChange}
-                required
-              />
-            </Form.Group>
+            <Row>
+              <Col md={8}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Area/Street/Locality</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="area"
+                    value={formData.area}
+                    onChange={handleChange}
+                    placeholder="Enter area/street/locality"
+                    required
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={4}>
+                <Form.Group className="mb-3">
+                  <Form.Label>&nbsp;</Form.Label>
+                  <Button 
+                    variant="outline-primary" 
+                    className="w-100"
+                    type="button"
+                    onClick={detectCurrentLocation}
+                  >
+                    <i className="fas fa-location-arrow me-1"></i>
+                    Detect Location
+                  </Button>
+                </Form.Group>
+              </Col>
+            </Row>
 
-            <Form.Group className="mb-3">
-              <Form.Label>City</Form.Label>
-              <Form.Control
-                type="text"
-                name="city"
-                value={formData.city}
-                onChange={handleChange}
-                required
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Pincode</Form.Label>
-              <Form.Control
-                type="text"
-                name="pincode"
-                value={formData.pincode}
-                onChange={handleChange}
-                required
-              />
-            </Form.Group>
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>City</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleChange}
+                    placeholder="Enter city"
+                    required
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Pincode</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="pincode"
+                    value={formData.pincode}
+                    onChange={handleChange}
+                    placeholder="Enter pincode"
+                    maxLength="6"
+                    required
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
 
             <Form.Group className="mb-4">
               <Form.Label>Address Type</Form.Label>
-              <Form.Select
-                name="type"
-                value={formData.type}
-                onChange={handleChange}
-              >
-                <option value="home">Home</option>
-                <option value="office">Office</option>
-                <option value="other">Other</option>
-              </Form.Select>
+              <div className="d-flex gap-3">
+                {['home', 'office', 'other'].map(type => (
+                  <Form.Check
+                    key={type}
+                    type="radio"
+                    name="type"
+                    id={`type-${type}`}
+                    label={type.charAt(0).toUpperCase() + type.slice(1)}
+                    value={type}
+                    checked={formData.type === type}
+                    onChange={handleChange}
+                  />
+                ))}
+              </div>
             </Form.Group>
-
-            <div className="d-flex gap-2">
-              <Button 
-                type="submit" 
-                variant="primary"
-                disabled={loading}
-                className="flex-grow-1"
-              >
-                {loading ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm me-2" />
-                    Saving...
-                  </>
-                ) : (
-                  editingAddress ? 'Update Address' : 'Save Address'
-                )}
-              </Button>
-              <Button 
-                variant="outline-secondary" 
-                onClick={() => setShowModal(false)}
-              >
-                Cancel
-              </Button>
-            </div>
-          </Form>
-        </Modal.Body>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button 
+              variant="outline-secondary" 
+              onClick={() => setShowModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              variant="primary"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" />
+                  Saving...
+                </>
+              ) : (
+                editingAddress ? 'Update Address' : 'Save Address'
+              )}
+            </Button>
+          </Modal.Footer>
+        </Form>
       </Modal>
     </>
   );

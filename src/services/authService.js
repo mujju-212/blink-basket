@@ -1,4 +1,50 @@
+import smsService from './smsService';
+
 class AuthService {
+  async sendOTP(phone) {
+    try {
+      const result = await smsService.sendOTP(phone);
+      return result;
+    } catch (error) {
+      console.error('Auth Service - Send OTP Error:', error);
+      return {
+        success: false,
+        message: 'Failed to send OTP. Please try again.'
+      };
+    }
+  }
+
+  async verifyOTPAndLogin(phone, otp) {
+    try {
+      const verificationResult = await smsService.verifyOTP(phone, otp);
+      
+      if (verificationResult.success) {
+        // Create user object and store in localStorage
+        const user = {
+          name: 'User', // You can enhance this later to get actual user data
+          phone: phone,
+          email: `${phone}@example.com`, // Temporary email
+          loginTime: new Date().toISOString()
+        };
+        
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        return {
+          success: true,
+          user: user,
+          message: 'Login successful'
+        };
+      } else {
+        return verificationResult;
+      }
+    } catch (error) {
+      console.error('Auth Service - Verify OTP Error:', error);
+      return {
+        success: false,
+        message: 'Failed to verify OTP. Please try again.'
+      };
+    }
+  }
+
   login(phone) {
     const user = {
       name: 'John Doe',
@@ -39,8 +85,12 @@ class AuthService {
   }
 
   verifyOTP(otp) {
-    // Simulate OTP verification
+    // Legacy method - kept for backward compatibility
     return otp.length === 6;
+  }
+
+  getOTPRemainingTime(phone) {
+    return smsService.getOTPRemainingTime(phone);
   }
 }
 

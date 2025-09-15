@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import Addresses from '../components/account/Addresses';
 
 const Account = () => {
   const { currentUser, logout } = useAuth();
@@ -371,35 +372,7 @@ const Account = () => {
 
           {/* Addresses Tab */}
           {activeTab === 'addresses' && (
-            <Card>
-              <Card.Header className="d-flex justify-content-between align-items-center">
-                <h5 className="mb-0">
-                                   <i className="fas fa-map-marker-alt me-2"></i>
-                  Saved Addresses
-                </h5>
-                <button 
-                  className="btn btn-primary"
-                  style={{ backgroundColor: '#ffe01b', borderColor: '#ffe01b', color: '#000' }}
-                >
-                  <i className="fas fa-plus me-2"></i>
-                  Add New Address
-                </button>
-              </Card.Header>
-              <Card.Body>
-                <div className="text-center py-5">
-                  <i className="fas fa-map-marker-alt fa-4x text-muted mb-3"></i>
-                  <h5>No saved addresses</h5>
-                  <p className="text-muted">Add an address to get started</p>
-                  <button 
-                    className="btn btn-primary"
-                    style={{ backgroundColor: '#ffe01b', borderColor: '#ffe01b', color: '#000' }}
-                  >
-                    <i className="fas fa-plus me-2"></i>
-                    Add Your First Address
-                  </button>
-                </div>
-              </Card.Body>
-            </Card>
+            <Addresses />
           )}
 
           {/* Wishlist Tab - COMPLETE IMPLEMENTATION */}

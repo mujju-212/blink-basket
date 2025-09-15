@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Alert } from 'react-bootstrap';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { PRODUCTS } from '../utils/constants';
 import { useCart } from '../context/CartContext';
 
@@ -9,6 +9,7 @@ const SearchResults = () => {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const { addToCart } = useCart();
+  const navigate = useNavigate();
   
   const query = searchParams.get('q');
   const category = searchParams.get('category');
@@ -28,9 +29,13 @@ const SearchResults = () => {
       );
     } else if (category) {
       // Filter by category
-      filteredProducts = PRODUCTS.filter(product => 
-        product.category === category
-      );
+      if (category === 'all') {
+        filteredProducts = PRODUCTS; // Show all products
+      } else {
+        filteredProducts = PRODUCTS.filter(product => 
+          product.category === category
+        );
+      }
     }
     
     console.log('Filtered results:', filteredProducts.length);
@@ -38,9 +43,15 @@ const SearchResults = () => {
     setLoading(false);
   }, [query, category]);
 
-  const handleAddToCart = (product) => {
+  const handleAddToCart = (e, product) => {
+    e.preventDefault();
+    e.stopPropagation();
     addToCart(product);
     alert(`${product.name} added to cart!`);
+  };
+
+  const handleProductClick = (product) => {
+    navigate(`/product/${product.id}`);
   };
 
   if (loading) {
@@ -60,6 +71,7 @@ const SearchResults = () => {
       <div className="mb-4">
         <h2>
           {query ? `Search Results for "${query}"` : 
+           category === 'all' ? 'All Products' :
            category ? `${category}` : 'Search Results'}
         </h2>
         <p className="text-muted">{results.length} products found</p>
@@ -75,7 +87,11 @@ const SearchResults = () => {
         <div className="row g-4">
           {results.map((product) => (
             <div key={product.id} className="col-6 col-md-4 col-lg-3">
-              <div className="card h-100 shadow-sm">
+              <div 
+                className="card h-100 shadow-sm" 
+                style={{ cursor: 'pointer' }}
+                onClick={() => handleProductClick(product)}
+              >
                 <div className="position-relative">
                   <img 
                     src={product.image} 
@@ -105,7 +121,7 @@ const SearchResults = () => {
                   </div>
                   <button 
                     className="btn btn-primary btn-sm mt-auto"
-                    onClick={() => handleAddToCart(product)}
+                    onClick={(e) => handleAddToCart(e, product)}
                   >
                     Add to Cart
                   </button>

@@ -1,45 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Form, Button, Alert, Modal } from 'react-bootstrap';
-import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import authService from '../services/authService';
 
 const Login = () => {
-  const [isAdmin, setIsAdmin] = useState(false);
   const [credentials, setCredentials] = useState({ username: '', password: '' });
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
+  const [otpSent, setOtpSent] = useState(false);
 
-  const { login, adminLogin } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const location = useLocation();
 
-  React.useEffect(() => {
-    const adminMode = searchParams.get('admin') === 'true';
-    setIsAdmin(adminMode);
-  }, [searchParams]);
-
-  const handleAdminLogin = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-    
-    try {
-      const success = adminLogin(credentials.username, credentials.password);
-      if (success) {
-        navigate('/admin');
-      } else {
-        setError('Invalid admin credentials. Use username: admin, password: admin123');
-      }
-    } catch (err) {
-      setError('Login failed. Please try again.');
-    } finally {
-      setLoading(false);
+  // Countdown timer for resend OTP
+  useEffect(() => {
+    let interval = null;
+    if (resendTimer > 0) {
+      interval = setInterval(() => {
+        setResendTimer(timer => timer - 1);
+      }, 1000);
+    } else if (resendTimer === 0 && interval) {
+      clearInterval(interval);
     }
-  };
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [resendTimer]);
 
   const handleSendOtp = async (e) => {
     e.preventDefault();
@@ -52,11 +44,26 @@ const Login = () => {
 
     setLoading(true);
     
-    // Simulate sending OTP
-    setTimeout(() => {
-      setShowOtpModal(true);
+    try {
+      const result = await authService.sendOTP(phone);
+      
+      if (result.success) {
+        setShowOtpModal(true);
+        setOtpSent(true);
+        setResendTimer(60); // 60 seconds before resend is allowed
+        
+        // Show demo OTP in development mode
+        if (result.demo && result.demoOTP) {
+          alert(`Demo Mode - OTP: ${result.demoOTP}`);
+        }
+      } else {
+        setError(result.message || 'Failed to send OTP');
+      }
+    } catch (err) {
+      setError('Failed to send OTP. Please try again.');
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   const handleVerifyOtp = async (e) => {
@@ -70,15 +77,50 @@ const Login = () => {
 
     setLoading(true);
     
-    setTimeout(() => {
-      login(phone);
-      setLoading(false);
-      setShowOtpModal(false);
+    try {
+      const result = await authService.verifyOTPAndLogin(phone, otp);
       
-      // Redirect to the page user intended to visit before login
-      const from = location.state?.from?.pathname || '/';
-      navigate(from, { replace: true });
-    }, 1000);
+      if (result.success) {
+        login(phone);
+        setShowOtpModal(false);
+        
+        // Redirect to the page user intended to visit before login
+        const from = location.state?.from?.pathname || '/';
+        navigate(from, { replace: true });
+      } else {
+        setError(result.message || 'Invalid OTP');
+      }
+    } catch (err) {
+      setError('Failed to verify OTP. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (resendTimer > 0) return;
+    
+    setError('');
+    setLoading(true);
+    
+    try {
+      const result = await authService.sendOTP(phone);
+      
+      if (result.success) {
+        setResendTimer(60);
+        
+        // Show demo OTP in development mode
+        if (result.demo && result.demoOTP) {
+          alert(`Demo Mode - New OTP: ${result.demoOTP}`);
+        }
+      } else {
+        setError(result.message || 'Failed to resend OTP');
+      }
+    } catch (err) {
+      setError('Failed to resend OTP. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -89,124 +131,54 @@ const Login = () => {
             <Card>
               <Card.Body className="p-4">
                 <div className="text-center mb-4">
-                  <h3>{isAdmin ? 'Admin Login' : 'Login to Blinkit'}</h3>
+                  <h3>Login to Blinkit</h3>
                   <p className="text-muted">
-                    {isAdmin ? 'Access admin dashboard' : 'Get groceries delivered in 10 minutes'}
+                    Get groceries delivered in 10 minutes
                   </p>
                 </div>
 
                 {error && <Alert variant="danger">{error}</Alert>}
 
-                {isAdmin ? (
-                  <Form onSubmit={handleAdminLogin}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Username</Form.Label>
-                      <Form.Control
-                        type="text"
-                        value={credentials.username}
-                        onChange={(e) => setCredentials({
-                          ...credentials,
-                          username: e.target.value
-                        })}
-                        placeholder="Enter admin username"
-                        required
-                      />
-                    </Form.Group>
+                <Form onSubmit={handleSendOtp}>
+                  <Form.Group className="mb-4">
+                    <Form.Label>Phone Number</Form.Label>
+                    <Form.Control
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                      placeholder="Enter your 10-digit phone number"
+                      maxLength="10"
+                      required
+                    />
+                    <Form.Text className="text-muted">
+                      We'll send you an OTP to verify your number
+                    </Form.Text>
+                  </Form.Group>
 
-                    <Form.Group className="mb-4">
-                      <Form.Label>Password</Form.Label>
-                      <Form.Control
-                        type="password"
-                        value={credentials.password}
-                        onChange={(e) => setCredentials({
-                          ...credentials,
-                          password: e.target.value
-                        })}
-                        placeholder="Enter admin password"
-                        required
-                      />
-                    </Form.Group>
-
-                    <Button 
-                      type="submit" 
-                      variant="primary" 
-                      className="w-100"
-                      disabled={loading}
-                    >
-                      {loading ? (
-                        <>
-                          <span className="spinner-border spinner-border-sm me-2" />
-                          Logging in...
-                        </>
-                      ) : (
-                        'Login as Admin'
-                      )}
-                    </Button>
-                  </Form>
-                ) : (
-                  <Form onSubmit={handleSendOtp}>
-                    <Form.Group className="mb-4">
-                      <Form.Label>Phone Number</Form.Label>
-                      <Form.Control
-                        type="tel"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                        placeholder="Enter your 10-digit phone number"
-                        maxLength="10"
-                        required
-                      />
-                                      <Form.Text className="text-muted">
-                        We'll send you an OTP to verify your number
-                      </Form.Text>
-                    </Form.Group>
-
-                    <Button 
-                      type="submit" 
-                      variant="primary" 
-                      className="w-100"
-                      disabled={loading}
-                    >
-                      {loading ? (
-                        <>
-                          <span className="spinner-border spinner-border-sm me-2" />
-                          Sending OTP...
-                        </>
-                      ) : (
-                        'Send OTP'
-                      )}
-                    </Button>
-                  </Form>
-                )}
-
-                <div className="text-center mt-3">
                   <Button 
-                    variant="link" 
-                    onClick={() => setIsAdmin(!isAdmin)}
-                    className="text-decoration-none"
+                    type="submit" 
+                    variant="primary" 
+                    className="w-100"
+                    disabled={loading}
                   >
-                    {isAdmin ? 'Customer Login' : 'Admin Login'}
+                    {loading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" />
+                        Sending OTP...
+                      </>
+                    ) : (
+                      'Send OTP'
+                    )}
                   </Button>
+                </Form>
+
+                <div className="mt-3 p-3 bg-light rounded">
+                  <small className="text-muted">
+                    <strong>Real SMS Authentication:</strong><br/>
+                    Enter your phone number to receive OTP via SMS<br/>
+                    <strong>Demo Mode:</strong> Works with any 10-digit number
+                  </small>
                 </div>
-
-                {isAdmin && (
-                  <div className="mt-3 p-3 bg-light rounded">
-                    <small className="text-muted">
-                      <strong>Demo Credentials:</strong><br/>
-                      Username: <code>admin</code><br/>
-                      Password: <code>admin123</code>
-                    </small>
-                  </div>
-                )}
-
-                {!isAdmin && (
-                  <div className="mt-3 p-3 bg-light rounded">
-                    <small className="text-muted">
-                      <strong>Demo Login:</strong><br/>
-                      Enter any 10-digit phone number<br/>
-                      OTP: Any 6-digit number works
-                    </small>
-                  </div>
-                )}
               </Card.Body>
             </Card>
           </Col>
@@ -223,6 +195,8 @@ const Login = () => {
             Enter the OTP sent to <strong>+91 {phone}</strong>
           </p>
           
+          {error && <Alert variant="danger">{error}</Alert>}
+          
           <Form onSubmit={handleVerifyOtp}>
             <Form.Group className="mb-3">
               <Form.Control
@@ -236,14 +210,16 @@ const Login = () => {
                 required
               />
               <Form.Text className="text-muted text-center d-block">
-                Demo: Enter any 6-digit number (e.g., 123456)
+                {process.env.REACT_APP_ENV === 'development' && 
+                  'Demo Mode: Check console/alert for OTP'
+                }
               </Form.Text>
             </Form.Group>
 
             <Button 
               type="submit" 
               variant="primary" 
-              className="w-100"
+              className="w-100 mb-3"
               disabled={loading || otp.length !== 6}
             >
               {loading ? (
@@ -257,17 +233,33 @@ const Login = () => {
             </Button>
           </Form>
 
-          <div className="text-center mt-3">
-            <Button 
-              variant="link" 
-              onClick={() => {
-                setShowOtpModal(false);
-                setOtp('');
-              }}
-              className="text-decoration-none"
-            >
-              Change Phone Number
-            </Button>
+          <div className="text-center">
+            <div className="d-flex justify-content-between align-items-center">
+              <Button 
+                variant="link" 
+                onClick={() => {
+                  setShowOtpModal(false);
+                  setOtp('');
+                  setError('');
+                }}
+                className="text-decoration-none"
+              >
+                Change Phone Number
+              </Button>
+              
+              <Button 
+                variant="link" 
+                onClick={handleResendOtp}
+                disabled={resendTimer > 0 || loading}
+                className="text-decoration-none"
+              >
+                {resendTimer > 0 ? (
+                  `Resend OTP in ${resendTimer}s`
+                ) : (
+                  'Resend OTP'
+                )}
+              </Button>
+            </div>
           </div>
         </Modal.Body>
       </Modal>

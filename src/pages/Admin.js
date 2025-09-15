@@ -1,17 +1,31 @@
-import React from 'react';
-import { Container, Button } from 'react-bootstrap';
+import React, { useState } from 'react';
+import { Container, Button, Card, Form, Alert } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const Admin = () => {
-  const { logout, isAdmin, currentUser } = useAuth();
+  const { logout, isAdmin, currentUser, adminLogin } = useAuth();
   const navigate = useNavigate();
+  const [credentials, setCredentials] = useState({ username: '', password: '' });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  React.useEffect(() => {
-    if (!isAdmin) {
-      navigate('/login?admin=true');
+  const handleAdminLogin = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    
+    try {
+      const success = adminLogin(credentials.username, credentials.password);
+      if (!success) {
+        setError('Invalid admin credentials. Use username: admin, password: admin123');
+      }
+    } catch (err) {
+      setError('Login failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
-  }, [isAdmin, navigate]);
+  };
 
   const handleLogout = () => {
     logout();
@@ -19,7 +33,88 @@ const Admin = () => {
   };
 
   if (!isAdmin) {
-    return null;
+    return (
+      <Container className="py-5">
+        <div className="row justify-content-center">
+          <div className="col-md-6 col-lg-4">
+            <Card>
+              <Card.Body className="p-4">
+                <div className="text-center mb-4">
+                  <h3>Admin Login</h3>
+                  <p className="text-muted">Access admin dashboard</p>
+                </div>
+
+                {error && <Alert variant="danger">{error}</Alert>}
+
+                <Form onSubmit={handleAdminLogin}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Username</Form.Label>
+                    <Form.Control
+                      type="text"
+                      value={credentials.username}
+                      onChange={(e) => setCredentials({
+                        ...credentials,
+                        username: e.target.value
+                      })}
+                      placeholder="Enter admin username"
+                      required
+                    />
+                  </Form.Group>
+
+                  <Form.Group className="mb-4">
+                    <Form.Label>Password</Form.Label>
+                    <Form.Control
+                      type="password"
+                      value={credentials.password}
+                      onChange={(e) => setCredentials({
+                        ...credentials,
+                        password: e.target.value
+                      })}
+                      placeholder="Enter admin password"
+                      required
+                    />
+                  </Form.Group>
+
+                  <Button 
+                    type="submit" 
+                    variant="primary" 
+                    className="w-100"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" />
+                        Logging in...
+                      </>
+                    ) : (
+                      'Login as Admin'
+                    )}
+                  </Button>
+                </Form>
+
+                <div className="mt-3 p-3 bg-light rounded">
+                  <small className="text-muted">
+                    <strong>Demo Credentials:</strong><br/>
+                    Username: <code>admin</code><br/>
+                    Password: <code>admin123</code>
+                  </small>
+                </div>
+
+                <div className="text-center mt-3">
+                  <Button 
+                    variant="link" 
+                    onClick={() => navigate('/')}
+                    className="text-decoration-none"
+                  >
+                    Back to Store
+                  </Button>
+                </div>
+              </Card.Body>
+            </Card>
+          </div>
+        </div>
+      </Container>
+    );
   }
 
   return (

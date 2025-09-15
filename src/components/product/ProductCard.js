@@ -85,21 +85,22 @@ const ProductCard = ({ product }) => {
         />
         
         <Button
-          variant={isInWishlist(product.id) ? "danger" : "outline-light"}
+          variant={isInWishlist(product.id) ? "danger" : "outline-danger"}
           size="sm"
           className="position-absolute top-0 end-0 m-2"
           onClick={handleToggleWishlist}
           style={{ 
             zIndex: 10,
-            backgroundColor: isInWishlist(product.id) ? '#dc3545' : 'rgba(255,255,255,0.9)',
+            backgroundColor: isInWishlist(product.id) ? '#dc3545' : 'rgba(255,255,255,0.95)',
             color: isInWishlist(product.id) ? 'white' : '#dc3545',
-            border: 'none',
+            border: isInWishlist(product.id) ? 'none' : '2px solid #dc3545',
             borderRadius: '50%',
             width: '36px',
             height: '36px',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
           }}
         >
           <i className="fas fa-heart"></i>

@@ -116,7 +116,7 @@ const Home = () => {
             <h2 className="section-title fw-bold mb-0">Shop by Category</h2>
             <button 
               className="btn btn-outline-primary"
-              onClick={() => navigate('/categories')}
+              onClick={() => navigate('/search?category=all')}
             >
               View All
             </button>
@@ -185,7 +185,7 @@ const Home = () => {
             <h2 className="section-title fw-bold mb-0">Popular Products</h2>
             <button 
               className="btn btn-outline-primary"
-              onClick={() => navigate('/search')}
+              onClick={() => navigate('/search?category=all')}
             >
               View All
             </button>
