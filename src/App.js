@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
@@ -20,6 +20,25 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
+// Layout component to conditionally show Header/Footer
+function Layout({ children }) {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin');
+
+  if (isAdminRoute) {
+    return <>{children}</>;
+  }
+
+  return (
+    <>
+      <Header />
+      <main>{children}</main>
+      <Footer />
+      <BackToTop />
+    </>
+  );
+}
+
 function App() {
   return (
     <AuthProvider>
@@ -28,8 +47,7 @@ function App() {
           <LocationProvider>
             <Router>
               <div className="App">
-                <Header />
-                <main>
+                <Layout>
                   <Routes>
                     <Route path="/" element={<Home />} />
                     <Route path="/product/:id" element={<ProductDetails />} />
@@ -62,9 +80,7 @@ function App() {
                     />
                     <Route path="/admin" element={<Admin />} />
                   </Routes>
-                </main>
-                <Footer />
-                <BackToTop />
+                </Layout>
               </div>
             </Router>
           </LocationProvider>

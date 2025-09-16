@@ -2,6 +2,16 @@ import React, { useState } from 'react';
 import { Container, Button, Card, Form, Alert } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { FaTachometerAlt } from 'react-icons/fa';
+
+// Import admin components
+import AdminLayout from '../components/admin/layout/AdminLayout';
+import Dashboard from '../components/admin/dashboard/Dashboard';
+import Categories from '../components/admin/categories/Categories';
+import Products from '../components/admin/products/Products';
+import Offers from '../components/admin/offers/Offers';
+import Banners from '../components/admin/banners/Banners';
+import Users from '../components/admin/users/Users';
 
 const Admin = () => {
   const { logout, isAdmin, currentUser, adminLogin } = useAuth();
@@ -9,6 +19,7 @@ const Admin = () => {
   const [credentials, setCredentials] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   const handleAdminLogin = async (e) => {
     e.preventDefault();
@@ -27,173 +38,141 @@ const Admin = () => {
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
-
+  // Render login form if not authenticated
   if (!isAdmin) {
     return (
-      <Container className="py-5">
-        <div className="row justify-content-center">
-          <div className="col-md-6 col-lg-4">
-            <Card>
-              <Card.Body className="p-4">
-                <div className="text-center mb-4">
-                  <h3>Admin Login</h3>
-                  <p className="text-muted">Access admin dashboard</p>
-                </div>
-
-                {error && <Alert variant="danger">{error}</Alert>}
-
-                <Form onSubmit={handleAdminLogin}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Username</Form.Label>
-                    <Form.Control
-                      type="text"
-                      value={credentials.username}
-                      onChange={(e) => setCredentials({
-                        ...credentials,
-                        username: e.target.value
-                      })}
-                      placeholder="Enter admin username"
-                      required
-                    />
-                  </Form.Group>
-
-                  <Form.Group className="mb-4">
-                    <Form.Label>Password</Form.Label>
-                    <Form.Control
-                      type="password"
-                      value={credentials.password}
-                      onChange={(e) => setCredentials({
-                        ...credentials,
-                        password: e.target.value
-                      })}
-                      placeholder="Enter admin password"
-                      required
-                    />
-                  </Form.Group>
-
-                  <Button 
-                    type="submit" 
-                    variant="primary" 
-                    className="w-100"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm me-2" />
-                        Logging in...
-                      </>
-                    ) : (
-                      'Login as Admin'
-                    )}
-                  </Button>
-                </Form>
-
-                <div className="mt-3 p-3 bg-light rounded">
-                  <small className="text-muted">
-                    <strong>Demo Credentials:</strong><br/>
-                    Username: <code>admin</code><br/>
-                    Password: <code>admin123</code>
-                  </small>
-                </div>
-
-                <div className="text-center mt-3">
-                  <Button 
-                    variant="link" 
-                    onClick={() => navigate('/')}
-                    className="text-decoration-none"
-                  >
-                    Back to Store
-                  </Button>
-                </div>
-              </Card.Body>
-            </Card>
-          </div>
-        </div>
-      </Container>
-    );
-  }
-
-  return (
-    <div>
-      {/* Admin Header */}
-      <div className="bg-dark text-white py-4">
+      <div style={{ backgroundColor: '#f8f9fa', minHeight: '100vh', paddingTop: '2rem' }}>
         <Container>
-          <div className="d-flex justify-content-between align-items-center">
-            <div>
-              <h2 className="mb-0">Admin Dashboard</h2>
-              <p className="mb-0">Welcome, {currentUser?.name}</p>
-            </div>
-            <div className="d-flex gap-3">
-              <Button variant="outline-light" onClick={() => navigate('/')}>
-                <i className="fas fa-home me-2"></i>
-                View Store
-              </Button>
-              <Button variant="outline-light" onClick={handleLogout}>
-                <i className="fas fa-sign-out-alt me-2"></i>
-                Logout
-              </Button>
+          <div className="row justify-content-center">
+            <div className="col-md-6 col-lg-4">
+              <Card className="shadow-lg border-0" style={{ borderRadius: '15px' }}>
+                <Card.Body className="p-5">
+                  <div className="text-center mb-4">
+                    <div style={{ 
+                      backgroundColor: '#ffd60a', 
+                      width: '80px', 
+                      height: '80px', 
+                      borderRadius: '50%', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      margin: '0 auto 20px' 
+                    }}>
+                      <FaTachometerAlt size={40} color="#333" />
+                    </div>
+                    <h3 style={{ color: '#333', fontWeight: 'bold' }}>Admin Login</h3>
+                    <p className="text-muted">Access admin dashboard</p>
+                  </div>
+
+                  {error && <Alert variant="danger">{error}</Alert>}
+
+                  <Form onSubmit={handleAdminLogin}>
+                    <Form.Group className="mb-3">
+                      <Form.Label style={{ color: '#333', fontWeight: '500' }}>Username</Form.Label>
+                      <Form.Control
+                        type="text"
+                        value={credentials.username}
+                        onChange={(e) => setCredentials({
+                          ...credentials,
+                          username: e.target.value
+                        })}
+                        placeholder="Enter admin username"
+                        required
+                        style={{ borderRadius: '10px', border: '2px solid #e9ecef', padding: '12px' }}
+                      />
+                    </Form.Group>
+
+                    <Form.Group className="mb-4">
+                      <Form.Label style={{ color: '#333', fontWeight: '500' }}>Password</Form.Label>
+                      <Form.Control
+                        type="password"
+                        value={credentials.password}
+                        onChange={(e) => setCredentials({
+                          ...credentials,
+                          password: e.target.value
+                        })}
+                        placeholder="Enter admin password"
+                        required
+                        style={{ borderRadius: '10px', border: '2px solid #e9ecef', padding: '12px' }}
+                      />
+                    </Form.Group>
+
+                    <Button 
+                      type="submit" 
+                      className="w-100"
+                      disabled={loading}
+                      style={{ 
+                        backgroundColor: '#ffd60a', 
+                        border: 'none', 
+                        borderRadius: '10px', 
+                        padding: '12px', 
+                        fontWeight: 'bold',
+                        color: '#333'
+                      }}
+                    >
+                      {loading ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2" />
+                          Logging in...
+                        </>
+                      ) : (
+                        'Login as Admin'
+                      )}
+                    </Button>
+                  </Form>
+
+                  <div className="mt-3 p-3" style={{ backgroundColor: '#fff3cd', borderRadius: '10px' }}>
+                    <small style={{ color: '#664d03' }}>
+                      <strong>Demo Credentials:</strong><br/>
+                      Username: <code>admin</code><br/>
+                      Password: <code>admin123</code>
+                    </small>
+                  </div>
+
+                  <div className="text-center mt-3">
+                    <Button 
+                      variant="link" 
+                      onClick={() => navigate('/')}
+                      className="text-decoration-none"
+                      style={{ color: '#ffd60a', fontWeight: '500' }}
+                    >
+                      Back to Store
+                    </Button>
+                  </div>
+                </Card.Body>
+              </Card>
             </div>
           </div>
         </Container>
       </div>
+    );
+  }
 
-      {/* Admin Content */}
-      <Container className="py-4">
-        <div className="row">
-          <div className="col-md-3 mb-4">
-            <div className="card text-center">
-              <div className="card-body">
-                <h3 className="text-primary">156</h3>
-                <p>Total Orders</p>
-              </div>
-            </div>
-          </div>
-          <div className="col-md-3 mb-4">
-            <div className="card text-center">
-              <div className="card-body">
-                <h3 className="text-success">100</h3>
-                <p>Total Products</p>
-              </div>
-            </div>
-          </div>
-          <div className="col-md-3 mb-4">
-            <div className="card text-center">
-              <div className="card-body">
-                <h3 className="text-info">1,234</h3>
-                <p>Total Users</p>
-              </div>
-            </div>
-          </div>
-          <div className="col-md-3 mb-4">
-            <div className="card text-center">
-              <div className="card-body">
-                <h3 className="text-warning">₹45,678</h3>
-                <p>Total Revenue</p>
-              </div>
-            </div>
-          </div>
-        </div>
+  // Render component based on active tab
+  const renderActiveComponent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return <Dashboard />;
+      case 'categories':
+        return <Categories />;
+      case 'products':
+        return <Products />;
+      case 'offers':
+        return <Offers />;
+      case 'banners':
+        return <Banners />;
+      case 'users':
+        return <Users />;
+      default:
+        return <Dashboard />;
+    }
+  };
 
-        <div className="card">
-          <div className="card-header">
-            <h5>Admin Features</h5>
-          </div>
-          <div className="card-body">
-            <p>Admin dashboard is working! You can now:</p>
-            <ul>
-              <li>View statistics</li>
-              <li>Manage products</li>
-              <li>Handle orders</li>
-              <li>Manage users</li>
-            </ul>
-          </div>
-        </div>
-      </Container>
-    </div>
+  // Render admin dashboard with layout
+  return (
+    <AdminLayout activeTab={activeTab} setActiveTab={setActiveTab}>
+      {renderActiveComponent()}
+    </AdminLayout>
   );
 };
 

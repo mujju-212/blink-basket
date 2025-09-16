@@ -120,6 +120,7 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     currentUser, // Add this for compatibility
+    isAdmin: user?.isAdmin || false, // Add isAdmin computed property
     login,
     adminLogin,
     logout,
