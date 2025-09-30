@@ -17,6 +17,9 @@ import Login from './pages/Login';
 import OrderConfirmation from './pages/OrderConfirmation';
 import Admin from './pages/Admin';
 import ProtectedRoute from './components/common/ProtectedRoute';
+// Import services to ensure they are initialized
+import './services/productService';
+import './services/categoryService';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 

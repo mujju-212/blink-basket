@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form, Row, Col } from 'react-bootstrap';
+import categoryService from '../../../services/categoryService';
 
 const ProductForm = ({ show, onHide, product }) => {
   const [formData, setFormData] = useState({
@@ -11,9 +12,15 @@ const ProductForm = ({ show, onHide, product }) => {
     unit: '',
     status: 'Active'
   });
-
-  const categories = ['Fruits', 'Dairy', 'Bakery', 'Vegetables', 'Beverages'];
+  
+  const [categories, setCategories] = useState([]);
   const units = ['kg', 'gm', 'ltr', 'ml', 'piece', 'packet'];
+
+  // Load categories from categoryService
+  useEffect(() => {
+    const allCategories = categoryService.getAllCategories();
+    setCategories(allCategories.map(cat => cat.name));
+  }, []);
 
   useEffect(() => {
     if (product) {

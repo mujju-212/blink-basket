@@ -1,10 +1,11 @@
 import React from 'react';
 import { Card, Nav } from 'react-bootstrap';
-import { FaTachometerAlt, FaTags, FaBoxes, FaPercent, FaImage, FaUsers } from 'react-icons/fa';
+import { FaTachometerAlt, FaTags, FaBoxes, FaPercent, FaImage, FaUsers, FaShoppingCart } from 'react-icons/fa';
 
 const AdminSidebar = ({ activeTab, setActiveTab }) => {
   const menuItems = [
     { key: 'dashboard', label: 'Dashboard', icon: FaTachometerAlt },
+    { key: 'orders', label: 'Order Management', icon: FaShoppingCart },
     { key: 'categories', label: 'Categories', icon: FaTags },
     { key: 'products', label: 'Products', icon: FaBoxes },
     { key: 'offers', label: 'Offers', icon: FaPercent },

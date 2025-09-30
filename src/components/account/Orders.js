@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Badge, Button, Modal } from 'react-bootstrap';
-import { orderService } from '../../services/orderService';
+import { useAuth } from '../../context/AuthContext';
 import orderService from '../../services/orderService';
 
 const Orders = () => {
@@ -28,11 +28,17 @@ const Orders = () => {
   const getStatusVariant = (status) => {
     switch (status) {
       case 'pending': return 'warning';
-      case 'processing': return 'info';
+      case 'confirmed': return 'info';
+      case 'preparing': return 'primary';
+      case 'out_for_delivery': return 'secondary';
       case 'delivered': return 'success';
       case 'cancelled': return 'danger';
       default: return 'secondary';
     }
+  };
+
+  const getStatusDisplay = (status) => {
+    return status.replace('_', ' ').toUpperCase();
   };
 
   const handleViewOrder = (order) => {
@@ -79,7 +85,7 @@ const Orders = () => {
                     <p className="text-muted mb-0">Placed on {order.date}</p>
                   </div>
                   <Badge bg={getStatusVariant(order.status)}>
-                    {order.status.toUpperCase()}
+                    {getStatusDisplay(order.status)}
                   </Badge>
                 </div>
 
@@ -129,7 +135,7 @@ const Orders = () => {
                 <p className="text-muted">Phone: {selectedOrder.phone}</p>
                 <p className="text-muted">Address: {selectedOrder.address}</p>
                 <Badge bg={getStatusVariant(selectedOrder.status)}>
-                  {selectedOrder.status.toUpperCase()}
+                  {getStatusDisplay(selectedOrder.status)}
                 </Badge>
               </div>
 

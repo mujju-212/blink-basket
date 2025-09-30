@@ -32,8 +32,50 @@
 }
 
 .categories-section,
-.products-section {
+.products-section,
+.category-products-section {
   margin: 3rem 0;
+}
+
+.popular-products-section {
+  margin: 4rem 0;
+  padding: 2rem 0;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 16px;
+}
+
+.category-products-section .section-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.category-products-section .section-title::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 50px;
+  height: 3px;
+  background: linear-gradient(90deg, #007bff, #0056b3);
+  border-radius: 2px;
+}
+
+.popular-products-section .section-title {
+  font-size: 2.2rem;
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #1a202c;
+  font-weight: 800;
+}
+
+.popular-products-section .section-title::after {
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  background: linear-gradient(90deg, #28a745, #20c997);
 }
 
 .section-title {
@@ -113,6 +155,54 @@
   overflow: hidden !important;
   background-color: #f8f9fa !important;
   margin: 0 auto 8px auto !important;
+}
+
+/* Category Product Section Enhancements */
+.category-products-section .row {
+  margin: 0 -8px;
+}
+
+.category-products-section .col-2,
+.category-products-section .col-lg-2,
+.category-products-section .col-md-3,
+.category-products-section .col-sm-4,
+.category-products-section .col-6 {
+  padding: 0 8px;
+  margin-bottom: 16px;
+}
+
+.category-products-section .btn-outline-primary {
+  font-size: 0.9rem;
+  padding: 0.5rem 1.5rem;
+  border-radius: 20px;
+  text-transform: lowercase;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.category-products-section .btn-outline-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+}
+
+/* Mobile responsive adjustments for category sections */
+@media (max-width: 768px) {
+  .category-products-section {
+    margin: 2rem 0;
+  }
+  
+  .category-products-section .section-title {
+    font-size: 1.5rem;
+  }
+  
+  .popular-products-section {
+    margin: 2.5rem 0;
+    padding: 1.5rem 1rem;
+  }
+  
+  .popular-products-section .section-title {
+    font-size: 1.8rem;
+  }
 }
 
 .category-icon img {

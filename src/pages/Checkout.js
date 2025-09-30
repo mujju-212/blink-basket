@@ -5,6 +5,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { FaClipboardList, FaCreditCard, FaCheck } from 'react-icons/fa';
+import orderService from '../services/orderService';
 
 const Checkout = () => {
   const { cart, getCartTotal, clearCart } = useCart();
@@ -27,6 +28,7 @@ const Checkout = () => {
     pincode: '',
     type: 'home'
   });
+  const [addressErrors, setAddressErrors] = useState({});
 
   const subtotal = getCartTotal();
   const deliveryFee = subtotal >= 99 ? 0 : 29;
@@ -112,8 +114,109 @@ const Checkout = () => {
     }
   };
 
+  const handleAddressInputChange = (field, value) => {
+    let filteredValue = value;
+    let error = '';
+
+    // Validation based on field type
+    switch (field) {
+      case 'name':
+      case 'city':
+        // Only allow letters and spaces
+        filteredValue = value.replace(/[^a-zA-Z\s]/g, '');
+        if (filteredValue.length < 2 && filteredValue.length > 0) {
+          error = `${field === 'name' ? 'Name' : 'City'} must be at least 2 characters`;
+        }
+        break;
+        
+      case 'phone':
+        // Only allow numbers, max 10 digits
+        filteredValue = value.replace(/[^0-9]/g, '').slice(0, 10);
+        if (filteredValue.length > 0 && filteredValue.length < 10) {
+          error = 'Phone number must be exactly 10 digits';
+        }
+        break;
+        
+      case 'pincode':
+        // Only allow numbers, max 6 digits for India
+        filteredValue = value.replace(/[^0-9]/g, '').slice(0, 6);
+        if (filteredValue.length > 0 && filteredValue.length < 6) {
+          error = 'Pincode must be exactly 6 digits';
+        }
+        break;
+        
+      default:
+        filteredValue = value;
+    }
+
+    setNewAddress({
+      ...newAddress,
+      [field]: filteredValue
+    });
+
+    // Update errors
+    setAddressErrors({
+      ...addressErrors,
+      [field]: error
+    });
+  };
+
+  const validateAddressForm = () => {
+    const newErrors = {};
+    
+    // Name validation
+    if (!newAddress.name.trim()) {
+      newErrors.name = 'Name is required';
+    } else if (newAddress.name.trim().length < 2) {
+      newErrors.name = 'Name must be at least 2 characters';
+    } else if (!/^[a-zA-Z\s]+$/.test(newAddress.name.trim())) {
+      newErrors.name = 'Name can only contain letters and spaces';
+    }
+    
+    // Phone validation
+    if (!newAddress.phone) {
+      newErrors.phone = 'Phone number is required';
+    } else if (!/^[0-9]{10}$/.test(newAddress.phone)) {
+      newErrors.phone = 'Phone number must be exactly 10 digits';
+    }
+    
+    // City validation
+    if (!newAddress.city.trim()) {
+      newErrors.city = 'City is required';
+    } else if (newAddress.city.trim().length < 2) {
+      newErrors.city = 'City must be at least 2 characters';
+    } else if (!/^[a-zA-Z\s]+$/.test(newAddress.city.trim())) {
+      newErrors.city = 'City can only contain letters and spaces';
+    }
+    
+    // Pincode validation
+    if (!newAddress.pincode) {
+      newErrors.pincode = 'Pincode is required';
+    } else if (!/^[0-9]{6}$/.test(newAddress.pincode)) {
+      newErrors.pincode = 'Pincode must be exactly 6 digits';
+    }
+    
+    // House validation
+    if (!newAddress.house.trim()) {
+      newErrors.house = 'House/Flat/Office number is required';
+    }
+    
+    // Area validation
+    if (!newAddress.area.trim()) {
+      newErrors.area = 'Area/Street/Locality is required';
+    }
+    
+    setAddressErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleAddAddress = (e) => {
     e.preventDefault();
+    
+    // Validate form before submission
+    if (!validateAddressForm()) {
+      return;
+    }
     const address = {
       id: Date.now(),
       ...newAddress,
@@ -136,6 +239,7 @@ const Checkout = () => {
       pincode: '',
       type: 'home'
     });
+    setAddressErrors({});
     
     // Show notification
     const notification = document.createElement('div');
@@ -163,14 +267,15 @@ const Checkout = () => {
       return;
     }
 
-    // Generate order ID
-    const newOrderId = 'BLK' + Date.now();
-    setOrderId(newOrderId);
-
-    // Create order
-    const order = {
-      id: newOrderId,
-      date: new Date().toISOString(),
+    // Create order using orderService
+    const orderData = {
+      customer: currentUser?.name || user?.displayName || 'Guest User',
+      phone: currentUser?.phone || user?.phoneNumber || 'N/A',
+      email: currentUser?.email || user?.email || 'N/A',
+      address: `${selectedAddress.house}, ${selectedAddress.area}, ${selectedAddress.city} - ${selectedAddress.pincode}`,
+      paymentMethod: paymentMethods.find(p => p.id === selectedPayment)?.name || 'Unknown',
+      paymentStatus: selectedPayment === 'cod' ? 'Pending' : 'Completed',
+      deliveryFee: deliveryFee,
       items: cart.map(item => ({
         id: item.id,
         name: item.name,
@@ -179,23 +284,12 @@ const Checkout = () => {
         quantity: item.quantity,
         size: item.size
       })),
-      total: total,
-      status: 'confirmed',
-      address: selectedAddress,
-      paymentMethod: paymentMethods.find(p => p.id === selectedPayment),
-      timeline: [
-        { status: 'Order Placed', time: new Date().toLocaleTimeString(), completed: true },
-        { status: 'Order Confirmed', time: new Date().toLocaleTimeString(), completed: true },
-        { status: 'Preparing', time: '', completed: false },
-        { status: 'Out for Delivery', time: '', completed: false },
-        { status: 'Delivered', time: '', completed: false }
-      ]
+      total: total
     };
 
-    // Save order
-    const existingOrders = JSON.parse(localStorage.getItem('userOrders') || '[]');
-    existingOrders.push(order);
-    localStorage.setItem('userOrders', JSON.stringify(existingOrders));
+    // Save order using orderService
+    const newOrder = orderService.createOrder(orderData);
+    setOrderId(newOrder.id);
 
     // Clear cart
     clearCart();
@@ -627,7 +721,10 @@ const Checkout = () => {
       )}
 
       {/* Add Address Modal */}
-      <Modal show={showAddressModal} onHide={() => setShowAddressModal(false)} size="lg">
+      <Modal show={showAddressModal} onHide={() => {
+        setShowAddressModal(false);
+        setAddressErrors({});
+      }} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>
             <i className="fas fa-map-marker-alt me-2"></i>
@@ -643,10 +740,14 @@ const Checkout = () => {
                   <Form.Control
                     type="text"
                     value={newAddress.name}
-                    onChange={(e) => setNewAddress({...newAddress, name: e.target.value})}
-                    placeholder={user?.name || currentUser?.name || "Enter full name"}
+                    onChange={(e) => handleAddressInputChange('name', e.target.value)}
+                    placeholder={user?.name || currentUser?.name || "Enter full name (letters only)"}
+                    isInvalid={!!addressErrors.name}
                     required
                   />
+                  <Form.Control.Feedback type="invalid">
+                    {addressErrors.name}
+                  </Form.Control.Feedback>
                 </Form.Group>
               </Col>
               <Col md={6}>
@@ -655,10 +756,18 @@ const Checkout = () => {
                   <Form.Control
                     type="tel"
                     value={newAddress.phone}
-                    onChange={(e) => setNewAddress({...newAddress, phone: e.target.value})}
-                    placeholder={user?.phone || currentUser?.phone || "Enter phone number"}
+                    onChange={(e) => handleAddressInputChange('phone', e.target.value)}
+                    placeholder={user?.phone || currentUser?.phone || "Enter 10-digit phone number"}
+                    isInvalid={!!addressErrors.phone}
+                    maxLength="10"
                     required
                   />
+                  <Form.Control.Feedback type="invalid">
+                    {addressErrors.phone}
+                  </Form.Control.Feedback>
+                  <Form.Text className="text-muted">
+                    {newAddress.phone.length}/10 digits
+                  </Form.Text>
                 </Form.Group>
               </Col>
             </Row>
@@ -668,10 +777,14 @@ const Checkout = () => {
               <Form.Control
                 type="text"
                 value={newAddress.house}
-                onChange={(e) => setNewAddress({...newAddress, house: e.target.value})}
-                placeholder="Enter house/flat/office number"
+                onChange={(e) => handleAddressInputChange('house', e.target.value)}
+                placeholder="e.g., House No. 123, Flat 4B, Office 501"
+                isInvalid={!!addressErrors.house}
                 required
               />
+              <Form.Control.Feedback type="invalid">
+                {addressErrors.house}
+              </Form.Control.Feedback>
             </Form.Group>
 
             <Row>
@@ -681,10 +794,14 @@ const Checkout = () => {
                   <Form.Control
                     type="text"
                     value={newAddress.area}
-                    onChange={(e) => setNewAddress({...newAddress, area: e.target.value})}
-                    placeholder="Enter area/street/locality"
+                    onChange={(e) => handleAddressInputChange('area', e.target.value)}
+                    placeholder="e.g., MG Road, Sector 15, Banjara Hills"
+                    isInvalid={!!addressErrors.area}
                     required
                   />
+                  <Form.Control.Feedback type="invalid">
+                    {addressErrors.area}
+                  </Form.Control.Feedback>
                 </Form.Group>
               </Col>
               <Col md={4}>
@@ -710,10 +827,14 @@ const Checkout = () => {
                   <Form.Control
                     type="text"
                     value={newAddress.city}
-                    onChange={(e) => setNewAddress({...newAddress, city: e.target.value})}
-                    placeholder="Enter city"
+                    onChange={(e) => handleAddressInputChange('city', e.target.value)}
+                    placeholder="Enter city name (letters only)"
+                    isInvalid={!!addressErrors.city}
                     required
                   />
+                  <Form.Control.Feedback type="invalid">
+                    {addressErrors.city}
+                  </Form.Control.Feedback>
                 </Form.Group>
               </Col>
               <Col md={6}>
@@ -722,11 +843,18 @@ const Checkout = () => {
                   <Form.Control
                     type="text"
                     value={newAddress.pincode}
-                    onChange={(e) => setNewAddress({...newAddress, pincode: e.target.value})}
-                    placeholder="Enter pincode"
+                    onChange={(e) => handleAddressInputChange('pincode', e.target.value)}
+                    placeholder="6-digit pincode"
+                    isInvalid={!!addressErrors.pincode}
                     maxLength="6"
                     required
                   />
+                  <Form.Control.Feedback type="invalid">
+                    {addressErrors.pincode}
+                  </Form.Control.Feedback>
+                  <Form.Text className="text-muted">
+                    {newAddress.pincode.length}/6 digits
+                  </Form.Text>
                 </Form.Group>
               </Col>
             </Row>
@@ -762,7 +890,10 @@ const Checkout = () => {
             </Form.Group>
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="outline-secondary" onClick={() => setShowAddressModal(false)}>
+            <Button variant="outline-secondary" onClick={() => {
+              setShowAddressModal(false);
+              setAddressErrors({});
+            }}>
               Cancel
             </Button>
             <Button 

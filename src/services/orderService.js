@@ -32,6 +32,8 @@ class OrderService {
       ...orderData,
       date: new Date().toISOString().split('T')[0],
       status: 'pending',
+      paymentStatus: orderData.paymentStatus || 'Completed',
+      deliveryFee: orderData.deliveryFee || 20,
       timeline: [
         { status: 'Order Placed', time: new Date().toLocaleTimeString(), completed: true },
         { status: 'Order Confirmed', time: '', completed: false },
@@ -56,17 +58,39 @@ class OrderService {
       
       // Update timeline based on status
       const currentTime = new Date().toLocaleTimeString();
+      const currentDate = new Date().toLocaleDateString();
+      
       switch(newStatus) {
-        case 'processing':
+        case 'confirmed':
           order.timeline[1].completed = true;
           order.timeline[1].time = currentTime;
           break;
+        case 'preparing':
+          order.timeline[1].completed = true;
+          order.timeline[2].completed = true;
+          order.timeline[2].time = currentTime;
+          if (!order.timeline[1].time) order.timeline[1].time = currentTime;
+          break;
+        case 'out_for_delivery':
+          order.timeline.slice(0, 4).forEach((step, index) => {
+            step.completed = true;
+            if (!step.time) step.time = currentTime;
+          });
+          order.timeline[3].time = currentTime;
+          break;
         case 'delivered':
           order.timeline.forEach((step, index) => {
-            if (index <= 4) {
-              step.completed = true;
-              if (!step.time) step.time = currentTime;
-            }
+            step.completed = true;
+            if (!step.time) step.time = currentTime;
+          });
+          order.timeline[4].time = currentTime;
+          break;
+        case 'cancelled':
+          // Add cancelled status to timeline
+          order.timeline.push({
+            status: 'Order Cancelled',
+            time: currentTime,
+            completed: true
           });
           break;
         default:

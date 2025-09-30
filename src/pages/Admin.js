@@ -7,10 +7,11 @@ import { FaTachometerAlt } from 'react-icons/fa';
 // Import admin components
 import AdminLayout from '../components/admin/layout/AdminLayout';
 import Dashboard from '../components/admin/dashboard/Dashboard';
-import Categories from '../components/admin/categories/Categories';
-import Products from '../components/admin/products/Products';
-import Offers from '../components/admin/offers/Offers';
-import Banners from '../components/admin/banners/Banners';
+import OrderManagement from '../components/admin/OrderManagement';
+import CategoryManagement from '../components/admin/CategoryManagement';
+import ProductManagement from '../components/admin/ProductManagement';
+import OffersManagement from '../components/admin/offers/OffersManagement';
+import BannerManagement from '../components/admin/banners/BannerManagement';
 import Users from '../components/admin/users/Users';
 
 const Admin = () => {
@@ -153,14 +154,16 @@ const Admin = () => {
     switch (activeTab) {
       case 'dashboard':
         return <Dashboard />;
+      case 'orders':
+        return <OrderManagement />;
       case 'categories':
-        return <Categories />;
+        return <CategoryManagement />;
       case 'products':
-        return <Products />;
+        return <ProductManagement />;
       case 'offers':
-        return <Offers />;
+        return <OffersManagement />;
       case 'banners':
-        return <Banners />;
+        return <BannerManagement />;
       case 'users':
         return <Users />;
       default:

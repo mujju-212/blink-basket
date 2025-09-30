@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Container } from 'react-bootstrap';
-import { CATEGORIES, PRODUCTS } from '../utils/constants';
+import categoryService from '../services/categoryService';
+import productService from '../services/productService';
 import { useNavigate } from 'react-router-dom';
 import ProductGrid from '../components/product/ProductGrid';
 import CategoryGrid from '../components/product/CategoryGrid';
+import CategoryProductSection from '../components/product/CategoryProductSection';
 
 const Home = () => {
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
+  const [categoryProducts, setCategoryProducts] = useState({});
+  const [popularProducts, setPopularProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const navigate = useNavigate();
@@ -37,9 +41,97 @@ const Home = () => {
   ];
 
   useEffect(() => {
-    setCategories(CATEGORIES);
-    setProducts(PRODUCTS.slice(0, 20));
+    const loadCategories = () => {
+      // Get the current categories (includes any admin changes)
+      // The categoryService will handle initialization automatically in its constructor
+      const allCategories = categoryService.getActiveCategories();
+      
+      console.log('🏠 Home page loading categories:', allCategories.length);
+      console.log('Categories:', allCategories);
+      
+      setCategories(allCategories);
+    };
+
+    const loadProducts = () => {
+      console.log('🏠 Home page loading products...');
+      const allProducts = productService.getAllProducts();
+      console.log('📦 Products from service:', allProducts.length);
+      
+      // Set all products
+      setProducts(allProducts);
+      
+      // Create popular products (first 12 products)
+      setPopularProducts(allProducts.slice(0, 12));
+      
+      // Group products by category
+      const productsByCategory = {};
+      allProducts.forEach(product => {
+        if (!productsByCategory[product.category]) {
+          productsByCategory[product.category] = [];
+        }
+        productsByCategory[product.category].push(product);
+      });
+      
+      setCategoryProducts(productsByCategory);
+      console.log('📦 Products grouped by category:', Object.keys(productsByCategory));
+    };
+
+    // Initial load
+    loadCategories();
+    loadProducts();
     setLoading(false);
+
+    // Listen for real-time product updates from admin
+    const handleProductsUpdate = (event) => {
+      console.log('🔄 Home: Products updated from admin', event.detail.products.length);
+      const allProducts = event.detail.products;
+      
+      // Update all products
+      setProducts(allProducts);
+      
+      // Update popular products
+      setPopularProducts(allProducts.slice(0, 12));
+      
+      // Re-group products by category
+      const productsByCategory = {};
+      allProducts.forEach(product => {
+        if (!productsByCategory[product.category]) {
+          productsByCategory[product.category] = [];
+        }
+        productsByCategory[product.category].push(product);
+      });
+      
+      setCategoryProducts(productsByCategory);
+    };
+
+    // Listen for localStorage changes (when categories are updated from admin)
+    const handleStorageChange = (e) => {
+      if (e.key === 'categories') {
+        console.log('📢 Categories updated, refreshing...');
+        loadCategories();
+      }
+      if (e.key === 'products') {
+        console.log('📢 Products updated, refreshing...');
+        loadProducts();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('productsUpdated', handleProductsUpdate);
+    
+    // Also listen for a custom event that we can trigger from the same tab
+    const handleCategoriesUpdate = () => {
+      console.log('📢 Categories updated (same tab), refreshing...');
+      loadCategories();
+    };
+    
+    window.addEventListener('categoriesUpdated', handleCategoriesUpdate);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('categoriesUpdated', handleCategoriesUpdate);
+      window.removeEventListener('productsUpdated', handleProductsUpdate);
+    };
   }, []);
 
   // Auto-rotate banner
@@ -179,19 +271,33 @@ const Home = () => {
           </div>
         </section>
 
-        {/* Products Section */}
-        <section className="products-section my-5">
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <h2 className="section-title fw-bold mb-0">Popular Products</h2>
-            <button 
-              className="btn btn-outline-primary"
-              onClick={() => navigate('/search?category=all')}
-            >
-              View All
-            </button>
-          </div>
-          <ProductGrid products={products} />
-        </section>
+        {/* Popular Products Section */}
+        <CategoryProductSection
+          categoryName="Popular Products"
+          products={popularProducts}
+          maxProducts={12}
+          showSeeAll={true}
+          className="popular-products-section"
+        />
+
+        {/* Category-wise Product Sections */}
+        {categories.filter(category => category.status === 'active').map((category) => {
+          const categoryProductsList = categoryProducts[category.name] || [];
+          
+          if (categoryProductsList.length === 0) {
+            return null;
+          }
+
+          return (
+            <CategoryProductSection
+              key={category.id}
+              categoryName={category.name}
+              products={categoryProductsList}
+              maxProducts={6}
+              showSeeAll={true}
+            />
+          );
+        })}
       </Container>
     </div>
   );

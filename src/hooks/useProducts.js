@@ -24,6 +24,19 @@ export const useProducts = () => {
     };
 
     loadData();
+
+    // Listen for real-time product updates from admin
+    const handleProductsUpdate = (event) => {
+      console.log('🔄 User-end: Products updated from admin', event.detail.products.length);
+      setProducts(event.detail.products);
+    };
+
+    window.addEventListener('productsUpdated', handleProductsUpdate);
+
+    // Cleanup event listener
+    return () => {
+      window.removeEventListener('productsUpdated', handleProductsUpdate);
+    };
   }, []);
 
   const searchProducts = (query) => {

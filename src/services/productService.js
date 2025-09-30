@@ -1,4 +1,5 @@
 import { PRODUCTS, CATEGORIES } from '../utils/constants';
+import categoryService from './categoryService';
 
 class ProductService {
   constructor() {
@@ -7,20 +8,46 @@ class ProductService {
 
   initializeData() {
     const storedProducts = localStorage.getItem('products');
-    const storedCategories = localStorage.getItem('categories');
 
     if (!storedProducts) {
       localStorage.setItem('products', JSON.stringify(PRODUCTS));
     }
 
-    if (!storedCategories) {
-      localStorage.setItem('categories', JSON.stringify(CATEGORIES));
-    }
+    // Initialize categories using categoryService
+    const constantsCategories = CATEGORIES.map(cat => ({
+      id: cat.id,
+      name: cat.name,
+      image: cat.image,
+      products: cat.products,
+      status: 'active'
+    }));
+    categoryService.initializeWithConstants(constantsCategories);
   }
 
   getAllProducts() {
     const products = localStorage.getItem('products');
     return products ? JSON.parse(products) : PRODUCTS;
+  }
+
+  // Force reload all products from constants (for debugging/reset)
+  reloadFromConstants() {
+    console.log('🔄 Forcing reload from constants...');
+    console.log('📦 PRODUCTS constant has', PRODUCTS.length, 'products');
+    
+    // Clear localStorage completely
+    localStorage.removeItem('products');
+    localStorage.removeItem('categories');
+    
+    // Force set new data
+    localStorage.setItem('products', JSON.stringify(PRODUCTS));
+    
+    // Verify what was stored
+    const stored = localStorage.getItem('products');
+    const parsed = stored ? JSON.parse(stored) : [];
+    console.log('✅ Stored in localStorage:', parsed.length, 'products');
+    console.log('📋 Sample stored products:', parsed.slice(0, 3).map(p => ({ id: p.id, name: p.name })));
+    
+    return PRODUCTS;
   }
 
   getProductById(id) {
@@ -45,8 +72,7 @@ class ProductService {
   }
 
   getAllCategories() {
-    const categories = localStorage.getItem('categories');
-    return categories ? JSON.parse(categories) : CATEGORIES;
+    return categoryService.getAllCategories();
   }
 
   addProduct(product) {
@@ -82,36 +108,15 @@ class ProductService {
   }
 
   addCategory(category) {
-    const categories = this.getAllCategories();
-    const newCategory = {
-      id: Date.now(),
-      ...category,
-      products: 0
-    };
-    
-    categories.push(newCategory);
-    localStorage.setItem('categories', JSON.stringify(categories));
-    return newCategory;
+    return categoryService.createCategory(category);
   }
 
   updateCategory(id, updatedCategory) {
-    const categories = this.getAllCategories();
-    const index = categories.findIndex(category => category.id === id);
-    
-    if (index !== -1) {
-      categories[index] = { ...categories[index], ...updatedCategory };
-      localStorage.setItem('categories', JSON.stringify(categories));
-      return categories[index];
-    }
-    
-    return null;
+    return categoryService.updateCategory(id, updatedCategory);
   }
 
   deleteCategory(id) {
-    const categories = this.getAllCategories();
-    const filteredCategories = categories.filter(category => category.id !== id);
-    localStorage.setItem('categories', JSON.stringify(filteredCategories));
-    return true;
+    return categoryService.deleteCategory(id);
   }
 
   getFeaturedProducts(limit = 20) {

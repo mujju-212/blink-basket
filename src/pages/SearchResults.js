@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Alert } from 'react-bootstrap';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { PRODUCTS } from '../utils/constants';
+import productService from '../services/productService';
 import { useCart } from '../context/CartContext';
 
 const SearchResults = () => {
@@ -18,11 +18,13 @@ const SearchResults = () => {
     console.log('Search query:', query);
     console.log('Category filter:', category);
     
+    // Get all products from service (includes custom additions)
+    const allProducts = productService.getAllProducts();
     let filteredProducts = [];
     
     if (query) {
       // Search by name or description
-      filteredProducts = PRODUCTS.filter(product =>
+      filteredProducts = allProducts.filter(product =>
         product.name.toLowerCase().includes(query.toLowerCase()) ||
         product.description.toLowerCase().includes(query.toLowerCase()) ||
         product.category.toLowerCase().includes(query.toLowerCase())
@@ -30,9 +32,9 @@ const SearchResults = () => {
     } else if (category) {
       // Filter by category
       if (category === 'all') {
-        filteredProducts = PRODUCTS; // Show all products
+        filteredProducts = allProducts; // Show all products
       } else {
-        filteredProducts = PRODUCTS.filter(product => 
+        filteredProducts = allProducts.filter(product => 
           product.category === category
         );
       }
@@ -41,6 +43,38 @@ const SearchResults = () => {
     console.log('Filtered results:', filteredProducts.length);
     setResults(filteredProducts);
     setLoading(false);
+
+    // Listen for real-time product updates from admin
+    const handleProductsUpdate = (event) => {
+      console.log('🔄 SearchResults: Products updated from admin');
+      // Re-run the search with new products
+      const updatedProducts = event.detail.products;
+      let newFilteredProducts = [];
+      
+      if (query) {
+        newFilteredProducts = updatedProducts.filter(product =>
+          product.name.toLowerCase().includes(query.toLowerCase()) ||
+          product.description.toLowerCase().includes(query.toLowerCase()) ||
+          product.category.toLowerCase().includes(query.toLowerCase())
+        );
+      } else if (category) {
+        if (category === 'all') {
+          newFilteredProducts = updatedProducts;
+        } else {
+          newFilteredProducts = updatedProducts.filter(product => 
+            product.category === category
+          );
+        }
+      }
+      
+      setResults(newFilteredProducts);
+    };
+
+    window.addEventListener('productsUpdated', handleProductsUpdate);
+
+    return () => {
+      window.removeEventListener('productsUpdated', handleProductsUpdate);
+    };
   }, [query, category]);
 
   const handleAddToCart = (e, product) => {

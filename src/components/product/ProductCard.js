@@ -78,29 +78,30 @@ const ProductCard = ({ product }) => {
           variant="top" 
           src={product.image} 
           alt={product.name}
-          style={{ height: '200px', objectFit: 'cover' }}
+          style={{ height: '120px', objectFit: 'cover' }}
           onError={(e) => {
-            e.target.src = `https://via.placeholder.com/200x200/f8f9fa/6c757d?text=${product.name.substring(0, 8)}`;
+            e.target.src = `https://via.placeholder.com/120x120/f8f9fa/6c757d?text=${product.name.substring(0, 8)}`;
           }}
         />
         
         <Button
           variant={isInWishlist(product.id) ? "danger" : "outline-danger"}
           size="sm"
-          className="position-absolute top-0 end-0 m-2"
+          className="position-absolute top-0 end-0 m-1"
           onClick={handleToggleWishlist}
           style={{ 
             zIndex: 10,
             backgroundColor: isInWishlist(product.id) ? '#dc3545' : 'rgba(255,255,255,0.95)',
             color: isInWishlist(product.id) ? 'white' : '#dc3545',
-            border: isInWishlist(product.id) ? 'none' : '2px solid #dc3545',
+            border: isInWishlist(product.id) ? 'none' : '1px solid #dc3545',
             borderRadius: '50%',
-            width: '36px',
-            height: '36px',
+            width: '28px',
+            height: '28px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+            boxShadow: '0 1px 4px rgba(0,0,0,0.15)',
+            fontSize: '0.7rem'
           }}
         >
           <i className="fas fa-heart"></i>
@@ -109,8 +110,8 @@ const ProductCard = ({ product }) => {
         {discount > 0 && (
           <Badge 
             bg="success" 
-            className="position-absolute top-0 start-0 m-2"
-            style={{ fontSize: '0.75rem' }}
+            className="position-absolute top-0 start-0 m-1"
+            style={{ fontSize: '0.65rem', padding: '0.25rem 0.4rem' }}
           >
             {discount}% OFF
           </Badge>
@@ -136,41 +137,37 @@ const ProductCard = ({ product }) => {
         )}
       </div>
 
-      <Card.Body className="d-flex flex-column">
-        <Card.Title className="h6 mb-2" style={{ minHeight: '2.5rem' }}>
+      <Card.Body className="d-flex flex-column p-2">
+        <Card.Title className="h6 mb-1" style={{ minHeight: '2rem', fontSize: '0.85rem', lineHeight: '1.2' }}>
           {product.name}
         </Card.Title>
-        <Card.Text className="text-muted small mb-2">{product.size}</Card.Text>
+        <Card.Text className="text-muted mb-1" style={{ fontSize: '0.75rem' }}>{product.size}</Card.Text>
 
-        <div className="d-flex align-items-center mb-3">
-          <span className="fw-bold text-success fs-5">₹{product.price}</span>
+        <div className="d-flex align-items-center mb-2">
+          <span className="fw-bold text-success" style={{ fontSize: '0.9rem' }}>₹{product.price}</span>
           {product.originalPrice && (
-            <span className="text-muted text-decoration-line-through ms-2">
+            <span className="text-muted text-decoration-line-through ms-1" style={{ fontSize: '0.75rem' }}>
               ₹{product.originalPrice}
             </span>
           )}
         </div>
 
-        <div className="mt-auto d-flex gap-2">
+        <div className="mt-auto">
           <Button 
-            variant="primary" 
-            className="flex-grow-1"
+            className="w-100"
             onClick={handleAddToCart}
             disabled={product.stock === 0}
-            style={{ fontSize: '0.875rem' }}
+            style={{ 
+              fontSize: '0.75rem', 
+              padding: '0.4rem 0.5rem',
+              fontWeight: '600',
+              backgroundColor: '#f8d616',
+              border: '1px solid #f8d616',
+              color: '#000',
+              borderRadius: '4px'
+            }}
           >
             {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
-          </Button>
-          <Button
-            variant="outline-primary"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/product/${product.id}`);
-            }}
-            style={{ minWidth: '40px' }}
-          >
-            <i className="fas fa-eye"></i>
           </Button>
         </div>
       </Card.Body>

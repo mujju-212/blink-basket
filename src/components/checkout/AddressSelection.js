@@ -16,9 +16,65 @@ const AddressSelection = ({ selectedAddress, onAddressSelect }) => {
     type: 'home'
   });
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    // Name validation
+    if (!newAddress.name.trim()) {
+      newErrors.name = 'Name is required';
+    } else if (newAddress.name.trim().length < 2) {
+      newErrors.name = 'Name must be at least 2 characters';
+    } else if (!/^[a-zA-Z\s]+$/.test(newAddress.name.trim())) {
+      newErrors.name = 'Name can only contain letters and spaces';
+    }
+    
+    // Phone validation
+    if (!newAddress.phone) {
+      newErrors.phone = 'Phone number is required';
+    } else if (!/^[0-9]{10}$/.test(newAddress.phone)) {
+      newErrors.phone = 'Phone number must be exactly 10 digits';
+    }
+    
+    // City validation
+    if (!newAddress.city.trim()) {
+      newErrors.city = 'City is required';
+    } else if (newAddress.city.trim().length < 2) {
+      newErrors.city = 'City must be at least 2 characters';
+    } else if (!/^[a-zA-Z\s]+$/.test(newAddress.city.trim())) {
+      newErrors.city = 'City can only contain letters and spaces';
+    }
+    
+    // Pincode validation
+    if (!newAddress.pincode) {
+      newErrors.pincode = 'Pincode is required';
+    } else if (!/^[0-9]{6}$/.test(newAddress.pincode)) {
+      newErrors.pincode = 'Pincode must be exactly 6 digits';
+    }
+    
+    // House validation
+    if (!newAddress.house.trim()) {
+      newErrors.house = 'House/Flat/Office number is required';
+    }
+    
+    // Area validation
+    if (!newAddress.area.trim()) {
+      newErrors.area = 'Area/Street/Locality is required';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleAddAddress = async (e) => {
     e.preventDefault();
+    
+    // Validate form before submission
+    if (!validateForm()) {
+      return;
+    }
+    
     setLoading(true);
     
     try {
@@ -33,6 +89,7 @@ const AddressSelection = ({ selectedAddress, onAddressSelect }) => {
         pincode: '',
         type: 'home'
       });
+      setErrors({});
       // Auto-select the newly added address
       onAddressSelect(addresses.length);
     } catch (error) {
@@ -43,9 +100,50 @@ const AddressSelection = ({ selectedAddress, onAddressSelect }) => {
   };
 
   const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    let filteredValue = value;
+    let error = '';
+
+    // Validation based on field type
+    switch (name) {
+      case 'name':
+      case 'city':
+        // Only allow letters and spaces
+        filteredValue = value.replace(/[^a-zA-Z\s]/g, '');
+        if (filteredValue.length < 2 && filteredValue.length > 0) {
+          error = `${name === 'name' ? 'Name' : 'City'} must be at least 2 characters`;
+        }
+        break;
+        
+      case 'phone':
+        // Only allow numbers, max 10 digits
+        filteredValue = value.replace(/[^0-9]/g, '').slice(0, 10);
+        if (filteredValue.length > 0 && filteredValue.length < 10) {
+          error = 'Phone number must be exactly 10 digits';
+        }
+        break;
+        
+      case 'pincode':
+        // Only allow numbers, max 6 digits for India
+        filteredValue = value.replace(/[^0-9]/g, '').slice(0, 6);
+        if (filteredValue.length > 0 && filteredValue.length < 6) {
+          error = 'Pincode must be exactly 6 digits';
+        }
+        break;
+        
+      default:
+        filteredValue = value;
+    }
+
     setNewAddress({
       ...newAddress,
-      [e.target.name]: e.target.value
+      [name]: filteredValue
+    });
+
+    // Update errors
+    setErrors({
+      ...errors,
+      [name]: error
     });
   };
 
@@ -54,7 +152,10 @@ const AddressSelection = ({ selectedAddress, onAddressSelect }) => {
       <Card>
         <Card.Header className="d-flex justify-content-between align-items-center">
           <h5 className="mb-0">Select Delivery Address</h5>
-          <Button variant="outline-primary" onClick={() => setShowAddModal(true)}>
+          <Button variant="outline-primary" onClick={() => {
+            setShowAddModal(true);
+            setErrors({});
+          }}>
             <i className="fas fa-plus me-2"></i>
             Add New Address
           </Button>
@@ -104,7 +205,10 @@ const AddressSelection = ({ selectedAddress, onAddressSelect }) => {
       </Card>
 
       {/* Add Address Modal */}
-      <Modal show={showAddModal} onHide={() => setShowAddModal(false)} size="lg">
+      <Modal show={showAddModal} onHide={() => {
+        setShowAddModal(false);
+        setErrors({});
+      }} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>Add New Address</Modal.Title>
         </Modal.Header>
@@ -119,8 +223,13 @@ const AddressSelection = ({ selectedAddress, onAddressSelect }) => {
                     name="name"
                     value={newAddress.name}
                     onChange={handleInputChange}
+                    placeholder="Enter your full name (letters only)"
+                    isInvalid={!!errors.name}
                     required
                   />
+                  <Form.Control.Feedback type="invalid">
+                    {errors.name}
+                  </Form.Control.Feedback>
                 </Form.Group>
               </div>
               <div className="col-md-6">
@@ -131,8 +240,17 @@ const AddressSelection = ({ selectedAddress, onAddressSelect }) => {
                     name="phone"
                     value={newAddress.phone}
                     onChange={handleInputChange}
+                    placeholder="Enter 10-digit phone number"
+                    isInvalid={!!errors.phone}
+                    maxLength="10"
                     required
                   />
+                  <Form.Control.Feedback type="invalid">
+                    {errors.phone}
+                  </Form.Control.Feedback>
+                  <Form.Text className="text-muted">
+                    {newAddress.phone.length}/10 digits
+                  </Form.Text>
                 </Form.Group>
               </div>
             </div>
@@ -144,8 +262,13 @@ const AddressSelection = ({ selectedAddress, onAddressSelect }) => {
                 name="house"
                 value={newAddress.house}
                 onChange={handleInputChange}
+                placeholder="e.g., House No. 123, Flat 4B, Office 501"
+                isInvalid={!!errors.house}
                 required
               />
+              <Form.Control.Feedback type="invalid">
+                {errors.house}
+              </Form.Control.Feedback>
             </Form.Group>
 
             <Form.Group className="mb-3">
@@ -155,8 +278,13 @@ const AddressSelection = ({ selectedAddress, onAddressSelect }) => {
                 name="area"
                 value={newAddress.area}
                 onChange={handleInputChange}
+                placeholder="e.g., MG Road, Sector 15, Banjara Hills"
+                isInvalid={!!errors.area}
                 required
               />
+              <Form.Control.Feedback type="invalid">
+                {errors.area}
+              </Form.Control.Feedback>
             </Form.Group>
 
             <div className="row">
@@ -168,8 +296,13 @@ const AddressSelection = ({ selectedAddress, onAddressSelect }) => {
                     name="city"
                     value={newAddress.city}
                     onChange={handleInputChange}
+                    placeholder="Enter city name (letters only)"
+                    isInvalid={!!errors.city}
                     required
                   />
+                  <Form.Control.Feedback type="invalid">
+                    {errors.city}
+                  </Form.Control.Feedback>
                 </Form.Group>
               </div>
               <div className="col-md-4">
@@ -180,9 +313,17 @@ const AddressSelection = ({ selectedAddress, onAddressSelect }) => {
                     name="pincode"
                     value={newAddress.pincode}
                     onChange={handleInputChange}
-                    pattern="[0-9]{6}"
+                    placeholder="6-digit pincode"
+                    isInvalid={!!errors.pincode}
+                    maxLength="6"
                     required
                   />
+                  <Form.Control.Feedback type="invalid">
+                    {errors.pincode}
+                  </Form.Control.Feedback>
+                  <Form.Text className="text-muted">
+                    {newAddress.pincode.length}/6 digits
+                  </Form.Text>
                 </Form.Group>
               </div>
             </div>

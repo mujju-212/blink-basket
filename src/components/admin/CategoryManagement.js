@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Table, Button, Modal, Form, Alert, Badge } from 'react-bootstrap';
-import { productService } from '../../services/productService';
+import categoryService from '../../services/categoryService';
+import { PRODUCTS } from '../../utils/constants';
 
 const CategoryManagement = () => {
   const [categories, setCategories] = useState([]);
@@ -18,15 +19,33 @@ const CategoryManagement = () => {
   }, []);
 
   const loadCategories = () => {
-    const categoriesData = productService.getAllCategories();
-    const productsData = productService.getAllProducts();
+    // Ensure products are initialized in localStorage
+    const storedProducts = localStorage.getItem('products');
+    if (!storedProducts) {
+      localStorage.setItem('products', JSON.stringify(PRODUCTS));
+      console.log('📦 Initialized products in localStorage');
+    }
+    
+    // Get all categories from service (includes both constants and newly added)
+    const categoriesData = categoryService.getAllCategories();
+    const productsData = JSON.parse(localStorage.getItem('products')) || PRODUCTS;
+    
+    console.log('🔍 ADMIN LoadCategories Debug:');
+    console.log('Categories from service:', categoriesData);
+    console.log('Products data:', productsData.length, 'products');
+    console.log('localStorage categories:', localStorage.getItem('categories'));
     
     // Count products per category
-    const categoriesWithCount = categoriesData.map(category => ({
-      ...category,
-      productCount: productsData.filter(product => product.category === category.name).length
-    }));
+    const categoriesWithCount = categoriesData.map(category => {
+      const productCount = productsData.filter(product => product.category === category.name).length;
+      console.log(`Category "${category.name}" has ${productCount} products`);
+      return {
+        ...category,
+        productCount
+      };
+    });
     
+    console.log('Final categories with count:', categoriesWithCount);
     setCategories(categoriesWithCount);
   };
 
@@ -48,14 +67,42 @@ const CategoryManagement = () => {
   };
 
   const handleDelete = (categoryId) => {
-    if (window.confirm('Are you sure you want to delete this category?')) {
+    console.log('🗑️ Delete clicked for:', categoryId, typeof categoryId);
+    
+    const categoryToDelete = categories.find(cat => String(cat.id) === String(categoryId));
+    const hasProducts = categoryToDelete && categoryToDelete.productCount > 0;
+    
+    let confirmMessage = 'Are you sure you want to delete this category?';
+    if (hasProducts) {
+      confirmMessage = `This category has ${categoryToDelete.productCount} products. Deleting it will make those products uncategorized. Are you sure you want to continue?`;
+    }
+    
+    if (window.confirm(confirmMessage)) {
+      console.log('✅ Delete confirmed');
+      
       try {
-        productService.deleteCategory(categoryId);
-        loadCategories();
-        showAlert('Category deleted successfully!');
+        // Ensure ID is string for consistent comparison
+        const idToDelete = String(categoryId);
+        console.log('ID to delete (converted to string):', idToDelete);
+        
+        console.log('Calling categoryService.deleteCategory with ID:', idToDelete);
+        const result = categoryService.deleteCategory(idToDelete);
+        console.log('Delete result:', result);
+        
+        if (result && result.success) {
+          console.log('✅ Delete successful, reloading categories');
+          loadCategories();
+          showAlert('Category deleted successfully!');
+        } else {
+          console.error('❌ Delete failed:', result);
+          showAlert('Failed to delete category', 'danger');
+        }
       } catch (error) {
+        console.error('Delete error:', error);
         showAlert('Error deleting category', 'danger');
       }
+    } else {
+      console.log('❌ Delete cancelled');
     }
   };
 
@@ -65,16 +112,25 @@ const CategoryManagement = () => {
 
     try {
       if (editingCategory) {
-        productService.updateCategory(editingCategory.id, formData);
+        console.log('Updating category:', editingCategory.id, 'with data:', formData);
+        const result = categoryService.updateCategory(editingCategory.id, formData);
+        console.log('Update result:', result);
         showAlert('Category updated successfully!');
       } else {
-        productService.addCategory(formData);
+        console.log('Creating new category with data:', formData);
+        const result = categoryService.createCategory(formData);
+        console.log('Create result:', result);
         showAlert('Category added successfully!');
       }
       
       setShowModal(false);
-      loadCategories();
+      
+      // Wait a bit for the localStorage updates to complete, then reload
+      setTimeout(() => {
+        loadCategories();
+      }, 100);
     } catch (error) {
+      console.error('Save error:', error);
       showAlert('Error saving category', 'danger');
     } finally {
       setLoading(false);
@@ -150,7 +206,6 @@ const CategoryManagement = () => {
                         variant="outline-danger"
                         size="sm"
                         onClick={() => handleDelete(category.id)}
-                        disabled={category.productCount > 0}
                       >
                         <i className="fas fa-trash"></i>
                       </Button>
