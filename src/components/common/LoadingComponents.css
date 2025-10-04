@@ -1,0 +1,296 @@
+/* Modern Loading & Animation Styles */
+
+@keyframes loading {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes bounce {
+  0%, 20%, 53%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40%, 43% {
+    transform: translateY(-10px);
+  }
+  70% {
+    transform: translateY(-5px);
+  }
+  90% {
+    transform: translateY(-2px);
+  }
+}
+
+/* Skeleton Loader */
+.skeleton-loader {
+  border-radius: 4px;
+  animation: loading 1.5s infinite;
+}
+
+/* Product Card Skeleton */
+.product-card-skeleton {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Loading Spinner Sizes */
+.spinner-sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+.spinner-md {
+  width: 2rem;
+  height: 2rem;
+}
+
+.spinner-lg {
+  width: 3rem;
+  height: 3rem;
+}
+
+/* Pulse Button */
+.pulse-button {
+  transition: all 0.3s ease;
+}
+
+.pulse-button:hover {
+  animation: pulse 0.6s infinite;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.pulse-button:active {
+  transform: translateY(0);
+  animation: none;
+}
+
+/* Shimmer Effect */
+.shimmer-wrapper {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer-wrapper.shimmer-active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* Floating Action Button */
+.fab {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fab:hover {
+  transform: scale(1.1);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.25) !important;
+}
+
+.fab-bottom-right {
+  bottom: 24px;
+  right: 24px;
+}
+
+.fab-bottom-left {
+  bottom: 24px;
+  left: 24px;
+}
+
+.fab-top-right {
+  top: 24px;
+  right: 24px;
+}
+
+.fab-top-left {
+  top: 24px;
+  left: 24px;
+}
+
+/* Progress Bar */
+.progress-container {
+  margin: 1rem 0;
+}
+
+.progress {
+  border-radius: 10px;
+  overflow: hidden;
+  background-color: #f8f9fa;
+}
+
+.progress-bar {
+  border-radius: 10px;
+  background: linear-gradient(45deg, #28a745, #20c997);
+}
+
+/* Animated Counter */
+.animated-counter {
+  font-weight: bold;
+  color: #28a745;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Smooth Transitions */
+.smooth-transition {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* Hover Effects */
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+/* Card Animations */
+.card-animate {
+  animation: fadeInScale 0.5s ease-out;
+}
+
+.card-animate:nth-child(even) {
+  animation-delay: 0.1s;
+}
+
+.card-animate:nth-child(3n) {
+  animation-delay: 0.2s;
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  .fab {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .fab-bottom-right {
+    bottom: 16px;
+    right: 16px;
+  }
+  
+  .fab-bottom-left {
+    bottom: 16px;
+    left: 16px;
+  }
+}
+
+/* Loading States */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Micro Interactions */
+.micro-bounce {
+  animation: bounce 0.6s ease-in-out;
+}
+
+.micro-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* Success/Error States */
+.success-pulse {
+  animation: pulse 0.6s ease-in-out;
+  color: #28a745;
+}
+
+.error-shake {
+  animation: shake 0.5s ease-in-out;
+  color: #dc3545;
+}
